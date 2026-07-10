@@ -7,6 +7,22 @@ Refinamento de **tudo que precisa ser desenvolvido** até o projeto estar pronto
 
 ---
 
+## Progresso (2026-07-10)
+
+MVP **construído e verificado localmente**: `npm run build` e `npm run lint` verdes; homepage e o caminho de validação de `POST /api/narrate` (400/413) testados em runtime. Esta seção é a fonte da verdade do estado atual — as tabelas abaixo permanecem como o plano original.
+
+- ✅ **Épico 0 — Bootstrap** — Next 16 + React 19 + Tailwind v4, SDKs, `lib/types.ts` / `lib/config.ts`, `.env.example`.
+- ✅ **Épico 1 — Libs de IA** — `lib/gemini.ts`, `lib/elevenlabs.ts`, `lib/scriptFallback.ts`.
+- ✅ **Épico 2 — Rota `/api/narrate`** — validação 400/413, fallback do Gemini, 502 de TTS, sucesso `{ script, audioBase64, mime }`.
+- ✅ **Épico 3 — Frontend** — `VideoUpload`, `StyleSelector`, `NarrationPlayer`, `page.tsx` (estados idle/loading/done/error).
+- 🟨 **Épico 4 — Polish** — loading/erro, responsivo, tema várzea e diferenciação de tom feitos; falta o aviso de duração do clipe (4.5).
+- ⬜ **Épico 5 — Deploy** — pendente: preencher `.env.local` / variáveis na Vercel, testar em produção, revisar limites serverless (payload/timeout).
+- ⬜ **Épico 6 — Stretch (burn-in)** — não iniciado.
+
+**Pendências / riscos de runtime** (só verificáveis com chaves reais): confirmar os model IDs (`gemini-2.5-flash`, `eleven_v3`) e a voz PT-BR; validar ponta a ponta o fluxo Files-API do Gemini e o retorno do `convert()` do ElevenLabs; validar o teto de 20 MB + `maxDuration = 60` contra os limites reais da Vercel.
+
+---
+
 ## Épico 0 — Bootstrap do projeto
 
 Objetivo: repositório executável, com tooling e segredos configurados. Todos os commits dentro da janela do desafio.

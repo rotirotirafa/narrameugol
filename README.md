@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# NarraMeuGol ⚽
 
-## Getting Started
+> **a IA que narra seu gol de várzea**
 
-First, run the development server:
+Suba um clipe curto de um jogo de futebol amador, e a IA assiste ao lance, escreve uma narração no estilo locutor de rádio brasileiro e transforma em áudio — tocando por cima do seu vídeo (mudo), pronto pra baixar e compartilhar.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Entrada para o **DEV Weekend Challenge (Passion Edition)**.
+
+## Como funciona
+
+```
+upload do clipe + estilo → Gemini (vídeo → roteiro) → ElevenLabs (roteiro → mp3)
+→ tocar vídeo mudo + áudio sincronizado + baixar mp3
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Uma única rota de servidor (`/api/narrate`) orquestra as duas IAs; as chaves ficam **somente no servidor**. Se o Gemini falhar, um roteiro genérico (fallback) entra no lugar — a demo nunca quebra por completo.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Next.js 16** (App Router) · **React 19** · **TypeScript**
+- **Tailwind CSS v4**
+- **Gemini** via `@google/genai` (compreensão de vídeo + roteiro)
+- **ElevenLabs** via `@elevenlabs/elevenlabs-js` (text-to-speech)
+- Deploy: **Vercel**
 
-## Learn More
+## Rodando localmente
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm install
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# configure as chaves (nenhuma delas vai pro git)
+cp .env.example .env.local
+#   GEMINI_API_KEY=...
+#   ELEVENLABS_API_KEY=...
+#   ELEVENLABS_VOICE_ID=...   (voz de locutor PT-BR)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+npm run dev        # http://localhost:3000
+```
 
-## Deploy on Vercel
+Outros comandos: `npm run build` (produção), `npm start` (servir o build), `npm run lint`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+> Sem as chaves, a interface abre e a validação de upload funciona, mas a geração de narração retorna erro — as chamadas ao Gemini/ElevenLabs precisam das variáveis em `.env.local`. Em produção, configure as três no dashboard da Vercel.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Variáveis de ambiente
+
+| Variável | Descrição |
+|----------|-----------|
+| `GEMINI_API_KEY` | Chave da API do Google Gemini. |
+| `ELEVENLABS_API_KEY` | Chave da API do ElevenLabs. |
+| `ELEVENLABS_VOICE_ID` | Id de uma voz de locutor em português do Brasil. |
+
+## Documentação
+
+A documentação viva (arquitetura, specs SDD, contrato da API, decisões) está em [`docs/`](./docs/README.md). O plano de trabalho e o estado atual ficam em [`docs/roadmap.md`](./docs/roadmap.md).
+
+## Estrutura
+
+```
+app/
+  layout.tsx                 # metadados PT-BR + fontes + tema
+  page.tsx                   # tela única: upload → player
+  globals.css                # tema várzea (Tailwind v4)
+  api/narrate/route.ts       # POST: orquestra Gemini + ElevenLabs
+components/
+  VideoUpload.tsx            # dropzone + validação
+  StyleSelector.tsx          # estilo do locutor: classic | hype
+  NarrationPlayer.tsx        # vídeo mudo + áudio + download + roteiro
+lib/
+  types.ts  config.ts        # contrato e constantes compartilhados
+  gemini.ts elevenlabs.ts scriptFallback.ts
+```
+
+## Escopo
+
+MVP: upload → roteiro → áudio → tocar sincronizado → baixar. Uma tela, sem login, sem banco, sem histórico. Tudo em português do Brasil.
