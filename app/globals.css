@@ -1,26 +1,140 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Base document colors — dark "night match" by default. */
+  --background: #0b1f14; /* noite de jogo */
+  --foreground: #f7f4ec; /* giz */
+}
+
+@theme {
+  /* --- Brand palette: futebol de várzea brasileiro --- */
+  --color-noite: #0b1f14; /* deep pitch-shadow, page background */
+  --color-noite-2: #0e2a1a; /* slightly lifted panel background */
+  --color-grama: #1b7a3e; /* pitch grass green */
+  --color-grama-dark: #0e4f27; /* shaded grass */
+  --color-ouro: #f2c230; /* vibrant canarinho gold — the "on air" signal */
+  --color-ouro-dark: #cf9d16; /* pressed gold */
+  --color-giz: #f7f4ec; /* chalk white — text & field lines */
+  --color-giz-dim: #cdd6cd; /* muted chalk */
+  --color-poeira: #e8552b; /* warm dust orange — energy / errors */
+  --color-poeira-dark: #c1401d;
+
+  /* Display face for the wordmark; body/mono inherited from next/font. */
+  --font-display: var(--font-display);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, Arial, Helvetica, sans-serif;
+}
+
+/* --- Signature: chalk field-line texture behind the hero --- */
+/* A center circle + halfway line drawn with radial/linear gradients, pure CSS. */
+.varzea-field {
+  position: relative;
+  isolation: isolate;
+}
+.varzea-field::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(
+      circle at 50% 42%,
+      transparent 0,
+      transparent 116px,
+      rgba(247, 244, 236, 0.14) 117px,
+      rgba(247, 244, 236, 0.14) 120px,
+      transparent 121px
+    ),
+    linear-gradient(
+      to right,
+      transparent calc(50% - 1.5px),
+      rgba(247, 244, 236, 0.1) calc(50% - 1.5px),
+      rgba(247, 244, 236, 0.1) calc(50% + 1.5px),
+      transparent calc(50% + 1.5px)
+    );
+  background-repeat: no-repeat;
+  mask-image: radial-gradient(
+    ellipse 80% 70% at 50% 40%,
+    #000 55%,
+    transparent 100%
+  );
+}
+
+/* Faint radial glow — floodlights over the pitch. */
+.pitch-glow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 60% 45% at 50% -5%,
+      rgba(242, 194, 48, 0.16),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 70% 50% at 50% 110%,
+      rgba(27, 122, 62, 0.28),
+      transparent 70%
+    );
+}
+
+/* --- "NO AR" pulse for the loading state --- */
+@keyframes noar-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(242, 194, 48, 0.55);
+  }
+  50% {
+    opacity: 0.72;
+    box-shadow: 0 0 0 10px rgba(242, 194, 48, 0);
+  }
+}
+.animate-noar {
+  animation: noar-pulse 1.15s ease-in-out infinite;
+}
+
+/* Spinning "signal" ring for loading. */
+@keyframes signal-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.animate-signal {
+  animation: signal-spin 0.9s linear infinite;
+}
+
+/* Wordmark: chalky top-lit gradient fill. */
+.wordmark {
+  font-family: var(--font-display), system-ui, sans-serif;
+  background: linear-gradient(
+    180deg,
+    var(--color-giz) 0%,
+    var(--color-giz) 55%,
+    #d7ddd2 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-noar,
+  .animate-signal {
+    animation: none;
+  }
 }
