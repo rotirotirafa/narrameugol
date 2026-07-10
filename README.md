@@ -25,6 +25,8 @@ Uma única rota de servidor (`/api/narrate`) orquestra as duas IAs; as chaves fi
 
 ## Rodando localmente
 
+**Pré-requisitos:** Node.js 20.9+ (recomendado 22 LTS) e npm.
+
 ```bash
 npm install
 
