@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useI18n } from "@/components/LanguageProvider";
 
 interface NarrationPlayerProps {
   /** The clip the user uploaded (played muted, in sync with the narration). */
@@ -27,6 +28,7 @@ export default function NarrationPlayer({
   audioBase64,
   mime,
 }: NarrationPlayerProps) {
+  const { m } = useI18n();
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -110,7 +112,7 @@ export default function NarrationPlayer({
   return (
     <section
       className="mx-auto flex w-full max-w-2xl flex-col gap-4"
-      aria-label="Narração gerada"
+      aria-label={m.player.aria}
     >
       {/* Video (muted) — the narration audio carries the sound. The `src` is
           set imperatively by the effect that owns the object URL's lifecycle. */}
@@ -133,18 +135,18 @@ export default function NarrationPlayer({
             type="button"
             onClick={handlePause}
             className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-giz/20 bg-noite/60 px-6 py-4 text-lg font-semibold text-giz transition hover:bg-noite focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ouro"
-            aria-label="Pausar a narração"
+            aria-label={m.player.pauseAria}
           >
-            <span aria-hidden="true">⏸</span> Pausar
+            {m.player.pause}
           </button>
         ) : (
           <button
             type="button"
             onClick={handlePlay}
             className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-ouro px-6 py-4 text-lg font-black uppercase tracking-wide text-noite shadow transition hover:brightness-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ouro disabled:cursor-not-allowed disabled:opacity-60"
-            aria-label="Ouvir a narração do lance"
+            aria-label={m.player.playAria}
           >
-            <span aria-hidden="true">▶</span> Ouvir a narração
+            {m.player.play}
           </button>
         )}
 
@@ -153,14 +155,14 @@ export default function NarrationPlayer({
           download="narrameugol.mp3"
           className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-grama/50 px-6 py-4 text-base font-semibold text-giz transition hover:bg-grama/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ouro"
         >
-          <span aria-hidden="true">⬇</span> Baixar narração (mp3)
+          {m.player.download}
         </a>
       </div>
 
       {/* The broadcaster script. */}
       <div className="rounded-2xl border border-grama/30 bg-noite/60 p-5">
         <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-ouro">
-          Roteiro da narração
+          {m.player.scriptHeading}
         </h2>
         <p className="whitespace-pre-wrap text-base leading-relaxed text-giz">
           {script}

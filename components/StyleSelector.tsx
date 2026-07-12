@@ -1,6 +1,7 @@
 "use client";
 
 import type { NarrationStyle } from "@/lib/types";
+import { useI18n } from "@/components/LanguageProvider";
 
 interface StyleSelectorProps {
   value: NarrationStyle;
@@ -8,34 +9,19 @@ interface StyleSelectorProps {
   disabled?: boolean;
 }
 
-interface StyleOption {
-  id: NarrationStyle;
-  title: string;
-  subtitle: string;
-}
-
-const OPTIONS: readonly StyleOption[] = [
-  {
-    id: "classic",
-    title: "Clássico",
-    subtitle: "locutor de rádio comedido",
-  },
-  {
-    id: "hype",
-    title: "Empolgadão",
-    subtitle: "narração over-the-top",
-  },
-] as const;
+const OPTION_IDS: readonly NarrationStyle[] = ["classic", "hype"];
 
 export default function StyleSelector({
   value,
   onChange,
   disabled = false,
 }: StyleSelectorProps) {
+  const { m } = useI18n();
+
   function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
     if (disabled) return;
 
-    const currentIndex = OPTIONS.findIndex((o) => o.id === value);
+    const currentIndex = OPTION_IDS.indexOf(value);
     if (currentIndex === -1) return;
 
     let nextIndex: number | null = null;
@@ -43,17 +29,17 @@ export default function StyleSelector({
     switch (event.key) {
       case "ArrowRight":
       case "ArrowDown":
-        nextIndex = (currentIndex + 1) % OPTIONS.length;
+        nextIndex = (currentIndex + 1) % OPTION_IDS.length;
         break;
       case "ArrowLeft":
       case "ArrowUp":
-        nextIndex = (currentIndex - 1 + OPTIONS.length) % OPTIONS.length;
+        nextIndex = (currentIndex - 1 + OPTION_IDS.length) % OPTION_IDS.length;
         break;
       case "Home":
         nextIndex = 0;
         break;
       case "End":
-        nextIndex = OPTIONS.length - 1;
+        nextIndex = OPTION_IDS.length - 1;
         break;
       default:
         return;
@@ -61,32 +47,33 @@ export default function StyleSelector({
 
     if (nextIndex !== null) {
       event.preventDefault();
-      onChange(OPTIONS[nextIndex].id);
+      onChange(OPTION_IDS[nextIndex]);
     }
   }
 
   return (
     <div
       role="radiogroup"
-      aria-label="Estilo da narração"
+      aria-label={m.style.groupAria}
       aria-disabled={disabled || undefined}
       onKeyDown={handleKeyDown}
       className="grid grid-cols-1 gap-2 sm:grid-cols-2"
     >
-      {OPTIONS.map((option) => {
-        const selected = option.id === value;
+      {OPTION_IDS.map((id) => {
+        const selected = id === value;
+        const label = m.style[id];
 
         return (
           <button
-            key={option.id}
+            key={id}
             type="button"
             role="radio"
             aria-checked={selected}
-            aria-label={`${option.title}: ${option.subtitle}`}
+            aria-label={`${label.title}: ${label.subtitle}`}
             disabled={disabled}
             tabIndex={disabled ? -1 : selected ? 0 : -1}
             onClick={() => {
-              if (!disabled) onChange(option.id);
+              if (!disabled) onChange(id);
             }}
             className={[
               "flex flex-col items-start rounded-xl border px-4 py-3 text-left",
@@ -100,14 +87,12 @@ export default function StyleSelector({
             ].join(" ")}
           >
             <span className="flex w-full items-center justify-between gap-2">
-              <span className="text-base font-semibold">{option.title}</span>
+              <span className="text-base font-semibold">{label.title}</span>
               <span
                 aria-hidden="true"
                 className={[
                   "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border",
-                  selected
-                    ? "border-ouro"
-                    : "border-giz/40",
+                  selected ? "border-ouro" : "border-giz/40",
                 ].join(" ")}
               >
                 {selected ? (
@@ -115,9 +100,7 @@ export default function StyleSelector({
                 ) : null}
               </span>
             </span>
-            <span className="mt-0.5 text-sm text-giz-dim">
-              {option.subtitle}
-            </span>
+            <span className="mt-0.5 text-sm text-giz-dim">{label.subtitle}</span>
           </button>
         );
       })}

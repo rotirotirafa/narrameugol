@@ -4,16 +4,26 @@ import { useState } from "react";
 import VideoUpload from "@/components/VideoUpload";
 import StyleSelector from "@/components/StyleSelector";
 import NarrationPlayer from "@/components/NarrationPlayer";
+import {
+  LanguageProvider,
+  LanguageToggle,
+  useI18n,
+} from "@/components/LanguageProvider";
 import { DEFAULT_STYLE } from "@/lib/config";
 import type { NarrateResponse, NarrationStyle } from "@/lib/types";
 
 type Status = "idle" | "loading" | "done" | "error";
 
-/** Generic fallback shown when the API returns no usable message. */
-const FALLBACK_ERROR =
-  "Deu ruim na jogada. Não rolou gerar a narração agora — tenta de novo.";
-
 export default function Home() {
+  return (
+    <LanguageProvider>
+      <HomeScreen />
+    </LanguageProvider>
+  );
+}
+
+function HomeScreen() {
+  const { m, lang } = useI18n();
   const [video, setVideo] = useState<File | null>(null);
   const [style, setStyle] = useState<NarrationStyle>(DEFAULT_STYLE);
   const [status, setStatus] = useState<Status>("idle");
@@ -32,6 +42,7 @@ export default function Home() {
     const form = new FormData();
     form.append("video", video);
     form.append("style", style);
+    form.append("language", lang);
 
     try {
       const res = await fetch("/api/narrate", { method: "POST", body: form });
@@ -43,17 +54,17 @@ export default function Home() {
         return;
       }
 
-      let message = FALLBACK_ERROR;
+      let message = m.states.genericError;
       try {
         const body = (await res.json()) as { error?: string };
         if (body?.error) message = body.error;
       } catch {
-        // Non-JSON error body — keep the fallback message.
+        // Non-JSON error body — keep the localized fallback message.
       }
       setErrorMsg(message);
       setStatus("error");
     } catch {
-      setErrorMsg("Sem sinal. Confere sua conexão e chuta de novo.");
+      setErrorMsg(m.states.networkError);
       setStatus("error");
     }
   }
@@ -66,33 +77,38 @@ export default function Home() {
   }
 
   return (
-    <main className="pitch-glow relative flex min-h-full flex-col items-center overflow-hidden px-4 pb-16 pt-10 sm:pt-14">
+    <main className="pitch-glow relative flex min-h-full flex-col items-center overflow-hidden px-4 pb-16 pt-6 sm:pt-8">
+      {/* ---------- Top bar: language toggle ---------- */}
+      <div className="flex w-full max-w-2xl items-center justify-end pb-4">
+        <LanguageToggle />
+      </div>
+
       {/* ---------- Hero ---------- */}
       <header className="varzea-field relative flex w-full max-w-2xl flex-col items-center pb-8 text-center sm:pb-10">
         <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-ouro/40 bg-ouro/10 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-ouro">
           <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-ouro" />
-          rádio de várzea
+          {m.hero.badge}
         </span>
 
         <h1 className="wordmark text-5xl leading-[0.92] tracking-tight sm:text-7xl">
-          NARRA
+          {m.hero.wordmark.pre}
           <span
             className="text-ouro"
             style={{ WebkitTextFillColor: "currentColor" }}
           >
-            MEU
+            {m.hero.wordmark.mid}
           </span>
-          GOL
+          {m.hero.wordmark.post}
         </h1>
 
         <p className="mt-4 max-w-md text-balance text-base text-giz-dim sm:text-lg">
-          a IA que narra seu gol de várzea <span aria-hidden="true">⚽</span>
+          {m.hero.tagline}
         </p>
       </header>
 
       {/* ---------- Booth card ---------- */}
       <section
-        aria-label="Gerar narração"
+        aria-label={m.controls.generate}
         className="relative w-full max-w-2xl rounded-3xl border border-grama/40 bg-noite-2/80 p-5 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.8)] backdrop-blur-sm sm:p-7"
       >
         {status === "done" && result ? (
@@ -111,7 +127,7 @@ export default function Home() {
             <fieldset className="flex flex-col gap-3" disabled={isLoading}>
               <legend className="mb-1 flex items-center gap-2 text-sm font-bold uppercase tracking-[0.14em] text-giz">
                 <span aria-hidden="true">🎙️</span>
-                Estilo do locutor
+                {m.controls.styleLegend}
               </legend>
               <StyleSelector
                 value={style}
@@ -136,13 +152,13 @@ export default function Home() {
                 <span aria-hidden="true" className="text-2xl">
                   ⚽
                 </span>
-                Gerar narração
+                {m.controls.generate}
               </button>
             )}
 
             {!canGenerate && !isLoading && status !== "error" ? (
               <p className="text-center text-sm text-giz-dim">
-                Suba o vídeo do lance para o locutor entrar em campo.
+                {m.controls.needVideo}
               </p>
             ) : null}
           </div>
@@ -150,8 +166,7 @@ export default function Home() {
       </section>
 
       <footer className="mt-10 max-w-md text-center text-xs text-giz-dim/70">
-        Feito na várzea, com café e paixão. Nada é salvo — recarregou, perdeu o
-        lance.
+        {m.footer}
       </footer>
     </main>
   );
@@ -160,6 +175,7 @@ export default function Home() {
 /* ---------------- Loading ---------------- */
 
 function LoadingState() {
+  const { m } = useI18n();
   return (
     <div
       role="status"
@@ -168,7 +184,7 @@ function LoadingState() {
     >
       <span className="animate-noar inline-flex items-center gap-2 rounded-full bg-poeira px-4 py-1.5 text-sm font-black uppercase tracking-[0.2em] text-giz">
         <span aria-hidden="true" className="h-2 w-2 rounded-full bg-giz" />
-        No ar
+        {m.states.onAir}
       </span>
 
       <div className="flex items-center gap-3">
@@ -176,14 +192,10 @@ function LoadingState() {
           aria-hidden="true"
           className="animate-signal h-6 w-6 rounded-full border-[3px] border-ouro/25 border-t-ouro"
         />
-        <p className="text-lg font-bold text-giz">
-          Aquecendo o locutor… <span aria-hidden="true">🎙️</span>
-        </p>
+        <p className="text-lg font-bold text-giz">{m.states.warming}</p>
       </div>
 
-      <p className="max-w-xs text-sm text-giz-dim">
-        Analisando o lance e escrevendo a narração. Já já sai o gooool.
-      </p>
+      <p className="max-w-xs text-sm text-giz-dim">{m.states.warmingSub}</p>
     </div>
   );
 }
@@ -197,6 +209,7 @@ function ErrorBanner({
   message: string;
   onRetry: () => void;
 }) {
+  const { m } = useI18n();
   return (
     <div
       role="alert"
@@ -213,7 +226,7 @@ function ErrorBanner({
         onClick={onRetry}
         className="shrink-0 rounded-xl bg-poeira px-4 py-2.5 text-sm font-bold uppercase tracking-wide text-giz transition-colors hover:bg-poeira-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-poeira focus-visible:ring-offset-2 focus-visible:ring-offset-noite-2"
       >
-        Tentar de novo
+        {m.states.retry}
       </button>
     </div>
   );
@@ -230,15 +243,14 @@ function DoneState({
   result: NarrateResponse;
   onReset: () => void;
 }) {
+  const { m } = useI18n();
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col items-center gap-1 text-center">
         <span className="text-sm font-bold uppercase tracking-[0.2em] text-ouro">
-          Gooool! Tá no ar
+          {m.states.doneTitle}
         </span>
-        <p className="text-sm text-giz-dim">
-          Dá o play pra ouvir a narração do seu lance.
-        </p>
+        <p className="text-sm text-giz-dim">{m.states.doneSub}</p>
       </div>
 
       {/* NarrationPlayer requires a File; done state only renders with one set. */}
@@ -257,7 +269,7 @@ function DoneState({
         className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-ouro/60 bg-transparent px-6 py-4 text-base font-black uppercase tracking-wide text-ouro transition-colors hover:bg-ouro/10 focus:outline-none focus-visible:ring-4 focus-visible:ring-ouro/40 focus-visible:ring-offset-2 focus-visible:ring-offset-noite-2"
       >
         <span aria-hidden="true">🔁</span>
-        Narrar outro lance
+        {m.states.reset}
       </button>
     </div>
   );

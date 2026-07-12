@@ -2,6 +2,7 @@
 
 import { useCallback, useId, useRef, useState } from "react";
 import { MAX_VIDEO_BYTES, VIDEO_MIME_PREFIX } from "@/lib/config";
+import { useI18n } from "@/components/LanguageProvider";
 
 interface VideoUploadProps {
   value: File | null;
@@ -33,6 +34,7 @@ export default function VideoUpload({
   onChange,
   disabled = false,
 }: VideoUploadProps) {
+  const { m } = useI18n();
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -54,13 +56,13 @@ export default function VideoUpload({
       }
 
       if (!file.type.startsWith(VIDEO_MIME_PREFIX)) {
-        setError("O arquivo precisa ser um vídeo.");
+        setError(m.upload.errNotVideo);
         onChange(null);
         return;
       }
 
       if (file.size > MAX_VIDEO_BYTES) {
-        setError(`O vídeo deve ter no máximo ${MAX_VIDEO_MB} MB.`);
+        setError(m.upload.errTooLarge(MAX_VIDEO_MB));
         onChange(null);
         return;
       }
@@ -68,7 +70,7 @@ export default function VideoUpload({
       setError(null);
       onChange(file);
     },
-    [onChange],
+    [m, onChange],
   );
 
   const handleInputChange = useCallback(
@@ -155,7 +157,7 @@ export default function VideoUpload({
         tabIndex={disabled ? -1 : 0}
         aria-disabled={disabled}
         aria-describedby={error ? errorId : undefined}
-        aria-label="Enviar o vídeo do seu lance"
+        aria-label={m.upload.aria}
         onClick={openPicker}
         onKeyDown={handleKeyDown}
         onDrop={handleDrop}
@@ -200,7 +202,7 @@ export default function VideoUpload({
               disabled={disabled}
               className="mt-1 rounded-lg px-3 py-1.5 text-sm font-semibold text-grama-dark underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-grama focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Trocar vídeo
+              {m.upload.change}
             </button>
           </div>
         ) : (
@@ -219,12 +221,8 @@ export default function VideoUpload({
               <path d="m7 8 5-5 5 5" />
               <path d="M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" />
             </svg>
-            <p className="text-sm font-medium text-noite">
-              Solte o vídeo do seu lance aqui ou clique para escolher
-            </p>
-            <p className="text-xs text-noite/60">
-              Formatos de vídeo até {MAX_VIDEO_MB} MB
-            </p>
+            <p className="text-sm font-medium text-noite">{m.upload.prompt}</p>
+            <p className="text-xs text-noite/60">{m.upload.hint(MAX_VIDEO_MB)}</p>
           </div>
         )}
       </div>
