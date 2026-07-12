@@ -15,6 +15,7 @@ import {
   type File as GenAiFile,
 } from "@google/genai";
 import type { NarrationStyle } from "@/lib/types";
+import type { Lang } from "@/lib/i18n";
 import { GEMINI_MODEL } from "@/lib/config";
 
 /** Max time (ms) to wait for the uploaded file to become ACTIVE. */
@@ -28,9 +29,26 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
- * Builds the PT-BR prompt, adjusting the tone by the selected style.
+ * Builds the prompt in the requested language, adjusting tone by style.
  */
-function buildPrompt(style: NarrationStyle): string {
+function buildPrompt(style: NarrationStyle, lang: Lang): string {
+  if (lang === "en") {
+    const tone =
+      style === "hype"
+        ? "Take on the persona of a VERY excited, over-the-top commentator, almost breathless, shouting the best moments."
+        : "Take on the persona of a classic, measured radio commentator, with controlled emotion and elegant delivery.";
+
+    return [
+      "You are a Brazilian-style radio football commentator calling amateur ('várzea') football.",
+      "Watch this clip, picture the sequence of the play in your mind,",
+      "and write a SHORT script (about 100 words) of live radio commentary to be read aloud.",
+      tone,
+      "Use catchphrases and expressive markers (for example: GOOOAL, ellipses to build suspense).",
+      "Do NOT invent player names, teams, score, or match minutes.",
+      "Respond ONLY with the script, in English, with no titles, no quotes, and no extra comments.",
+    ].join(" ");
+  }
+
   const tom =
     style === "hype"
       ? "Assuma a persona de um locutor MUITO empolgado, over-the-top, quase sem fôlego, gritando os melhores momentos."
@@ -93,13 +111,15 @@ async function uploadAndAwaitActive(
  *
  * @param video - The uploaded clip (a browser File, which is also a Blob).
  * @param style - "classic" for a measured tone, "hype" for over-the-top energy.
- * @returns A trimmed, non-empty PT-BR script.
+ * @param lang - Narration language ("pt-BR" or "en").
+ * @returns A trimmed, non-empty script in the requested language.
  * @throws on any failure — missing API key, network error, processing failure,
  *         or a blocked/empty model response.
  */
 export async function generateScript(
   video: File,
   style: NarrationStyle,
+  lang: Lang,
 ): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -110,7 +130,7 @@ export async function generateScript(
 
   const uploaded = await uploadAndAwaitActive(ai, video);
 
-  const prompt = buildPrompt(style);
+  const prompt = buildPrompt(style, lang);
   const response = await ai.models.generateContent({
     model: GEMINI_MODEL,
     contents: createUserContent([

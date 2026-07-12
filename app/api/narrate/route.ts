@@ -15,6 +15,7 @@
  * detalhes ficam apenas no `console.error` do servidor.
  */
 import type { NarrationStyle } from "@/lib/types";
+import { coerceLang } from "@/lib/i18n";
 import {
   AUDIO_MIME,
   DEFAULT_STYLE,
@@ -55,6 +56,7 @@ export async function POST(req: Request): Promise<Response> {
     const form = await req.formData();
     const video = form.get("video");
     const style = coerceStyle(form.get("style"));
+    const language = coerceLang(form.get("language"));
 
     // --- Validação do upload (400 / 413) ---
     if (!(video instanceof File)) {
@@ -88,15 +90,15 @@ export async function POST(req: Request): Promise<Response> {
     // --- Roteiro: Gemini com fallback local (falha do Gemini NÃO vira erro) ---
     let script: string;
     try {
-      script = await generateScript(video, style);
+      script = await generateScript(video, style, language);
     } catch (err) {
       console.error("[narrate] fallback acionado: falha ao gerar roteiro no Gemini.", err);
-      script = fallbackScript(style);
+      script = fallbackScript(style, language);
     }
 
     if (!script.trim()) {
       console.error("[narrate] fallback acionado: roteiro vazio após a geração.");
-      script = fallbackScript(style);
+      script = fallbackScript(style, language);
     }
 
     // --- Áudio: ElevenLabs (falha => 502, sem áudio a entregar) ---
