@@ -7,19 +7,23 @@ Refinamento de **tudo que precisa ser desenvolvido** até o projeto estar pronto
 
 ---
 
-## Progresso (2026-07-10)
+## Progresso (2026-07-12)
 
-MVP **construído e verificado localmente**: `npm run build` e `npm run lint` verdes; homepage e o caminho de validação de `POST /api/narrate` (400/413) testados em runtime. Esta seção é a fonte da verdade do estado atual — as tabelas abaixo permanecem como o plano original.
+MVP **construído e verificado**: `npm run build` e `npm run lint` verdes; o fluxo completo, o toggle de idioma e o **vídeo narrado (ffmpeg.wasm)** foram testados em navegador real (Playwright — mp4 gerado e baixado). Esta seção é a fonte da verdade do estado atual — as tabelas abaixo permanecem como o plano original.
 
 - ✅ **Épico 0 — Bootstrap** — Next 16 + React 19 + Tailwind v4, SDKs, `lib/types.ts` / `lib/config.ts`, `.env.example`.
-- ✅ **Épico 1 — Libs de IA** — `lib/gemini.ts`, `lib/elevenlabs.ts`, `lib/scriptFallback.ts`.
-- ✅ **Épico 2 — Rota `/api/narrate`** — validação 400/413, fallback do Gemini, 502 de TTS, sucesso `{ script, audioBase64, mime }`.
-- ✅ **Épico 3 — Frontend** — `VideoUpload`, `StyleSelector`, `NarrationPlayer`, `page.tsx` (estados idle/loading/done/error).
-- 🟨 **Épico 4 — Polish** — loading/erro, responsivo, tema várzea e diferenciação de tom feitos; falta o aviso de duração do clipe (4.5).
-- ⬜ **Épico 5 — Deploy** — pendente: preencher `.env.local` / variáveis na Vercel, testar em produção, revisar limites serverless (payload/timeout).
-- ⬜ **Épico 6 — Stretch (burn-in)** — não iniciado.
+- ✅ **Épico 1 — Libs de IA** — `lib/gemini.ts`, `lib/elevenlabs.ts`, `lib/scriptFallback.ts` (agora cientes do idioma).
+- ✅ **Épico 2 — Rota `/api/narrate`** — validação 400/413, fallback do Gemini, 502 de TTS, sucesso `{ script, audioBase64, mime }`, erros localizados.
+- ✅ **Épico 3 — Frontend** — `VideoUpload`, `StyleSelector`, `NarrationPlayer`, `page.tsx` (idle/loading/done/error), tema várzea.
+- 🟨 **Épico 4 — Polish** — loading/erro, responsivo, tema e diferenciação de tom feitos; falta o aviso de duração do clipe (4.5).
+- ⬜ **Épico 5 — Deploy** — pendente: preencher chaves na Vercel, testar em produção, revisar limites serverless (payload/timeout).
+- ✅ **Épico 6 — Stretch (burn-in)** — feito **no cliente** (ffmpeg.wasm), não no servidor: botão "vídeo narrado (mp4)" que faz o mux no navegador, com fallback pro caminho manual.
 
-**Pendências / riscos de runtime** (só verificáveis com chaves reais): confirmar os model IDs (`gemini-2.5-flash`, `eleven_v3`) e a voz PT-BR; validar ponta a ponta o fluxo Files-API do Gemini e o retorno do `convert()` do ElevenLabs; validar o teto de 20 MB + `maxDuration = 60` contra os limites reais da Vercel.
+**Extras além do brief original:**
+- ✅ **i18n PT-BR / EN** — toggle que troca UI + narração + erros da API + wordmark (`lib/i18n.ts`, `components/LanguageProvider.tsx`).
+- ✅ **Compartilhamento** — download do mp3, do clipe (mudo) e do mp4 narrado; dicas de edição (CapCut/InShot/Reels).
+
+**Pendências / riscos de runtime** (só verificáveis com chaves reais): validar o pipeline Gemini → ElevenLabs ponta a ponta (o caminho do mp4 já foi validado com clipe sintético); a voz do ElevenLabs precisa estar disponível no plano da conta; e o teto de 20 MB + `maxDuration = 60` precisa ser conferido contra os limites reais da Vercel. Model IDs ficam em `lib/config.ts` (ElevenLabs já em `eleven_multilingual_v2`).
 
 ---
 

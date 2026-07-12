@@ -18,21 +18,19 @@ Precedence: `BRIEF.md` > `docs/` > `CLAUDE.md`.
 
 ## Current state
 
-The repo is **not yet scaffolded** — only `BRIEF.md` exists, no commits, no `package.json`. The first task is usually to bootstrap the Next.js app. This is a DEV Weekend Challenge entry: it must be a brand-new repo with **all commits inside the challenge window**, so make an initial commit immediately after scaffolding.
+Scaffolded and working: **Next.js 16 + React 19 + Tailwind v4** (App Router). The MVP is built and verified (build + lint green): upload → Gemini script → ElevenLabs mp3 → synced player → downloads. Beyond the original brief it also has a **PT-BR / EN language toggle** (switches the UI *and* the narration) and a **share panel** (download the mp3, the muted clip, or a one-click narrated mp4 muxed in-browser with ffmpeg.wasm). This is a DEV Weekend Challenge entry — keep **all commits inside the challenge window**, and prefer small, logical commits.
 
 ## Commands
 
-Once scaffolded (Next.js App Router + TypeScript + Tailwind):
-
 ```bash
-npx create-next-app@latest . --ts --tailwind --app   # bootstrap (one-time)
-npm run dev      # local dev server
-npm run build    # production build (run before deploying)
+npm install
+npm run dev      # local dev server (http://localhost:3000)
+npm run build    # production build (Turbopack) — run before deploying
 npm run lint     # eslint
 npm start        # serve the production build
 ```
 
-No test framework is chosen yet — don't assume one exists.
+No unit-test framework is set up. Runtime verification is manual: run the app, or drive it with the Playwright MCP (used to verify the ffmpeg burn-in end to end). Keys live in `.env.local` / `.env` (see below); the build compiles without them.
 
 ## Architecture
 
@@ -41,25 +39,30 @@ A one-screen web app that narrates amateur football clips. UI and narration are 
 Data flow — a **single** API route orchestrates both AI calls server-side:
 
 ```
-Browser: upload video + style ──POST /api/narrate (multipart)──▶
-  /api/narrate (route handler):
-    1. validate upload
-    2. Gemini (@google/genai, gemini-2.5-flash): video → PT-BR broadcaster script
-       └─ fallback to lib/scriptFallback.ts template if Gemini fails
-    3. ElevenLabs (@elevenlabs/elevenlabs-js, Eleven v3): script → mp3
+Browser: upload video + style + language ──POST /api/narrate (multipart)──▶
+  /api/narrate (route handler, runtime=nodejs):
+    1. validate upload (400/413); coerce style + language
+    2. Gemini (@google/genai, gemini-2.5-flash): video → broadcaster script in the
+       chosen language └─ fallback to lib/scriptFallback.ts if Gemini fails (still 200)
+    3. ElevenLabs (@elevenlabs/elevenlabs-js, eleven_multilingual_v2): script → mp3
+       (502 on failure)
     4. return { script, audioBase64, mime: "audio/mpeg" }
-  ◀── Browser: <video muted> + <audio> play together + download mp3
+  ◀── Browser: <video muted> + <audio> play together; download mp3 / clip; or mux a
+      single narrated mp4 in-browser via ffmpeg.wasm (lib/burnIn.ts)
 ```
 
-`POST /api/narrate` responses: `200 {script, audioBase64, mime}`; errors `400` (no/invalid video), `413` (too large), `502` (Gemini/ElevenLabs failure), `500` (unexpected).
+`POST /api/narrate` — multipart `video`, `style` (`classic`|`hype`), `language` (`pt-BR`|`en`). Responses: `200 {script, audioBase64, mime}`; errors `400`/`413`/`502`/`500` with a localized `{error}`.
 
-Intended layout: `app/` (page + `api/narrate/route.ts`), `components/` (`VideoUpload`, `StyleSelector`, `NarrationPlayer`), `lib/` (`types`, `gemini`, `elevenlabs`, `scriptFallback`). See `BRIEF.md` for the full tree.
+Layout: `app/` (page + `api/narrate/route.ts`), `components/` (`VideoUpload`, `StyleSelector`, `NarrationPlayer`, `LanguageProvider`), `lib/` (`types`, `config`, `i18n`, `gemini`, `elevenlabs`, `scriptFallback`, `burnIn`).
+
+**i18n:** `lib/i18n.ts` is the single source of truth for every UI string (typed `Messages`, PT-BR + EN) plus localized API errors; `components/LanguageProvider.tsx` holds the language context, `useI18n()`, and the toggle. The selected language is sent to `/api/narrate` so the narration is generated in that language.
 
 ## Non-obvious constraints
 
-- **Both API keys are server-side only** — `GEMINI_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID` live in the route handler / env, **never** in client code. Commit `.env.example` (names only); keep real values in gitignored `.env.local`; also set all three in the Vercel dashboard.
-- **Always wire the Gemini → `scriptFallback` template path** so a live demo can't fully break if Gemini fails.
-- Gemini uploads should use the **File API** for clips (inline only for very small files); keep clips short (~≤1 min) for cost/latency.
-- Player sync is intentionally loose: `<video muted>` + `<audio>`, `play()` both together — it's a voiceover, no frame-perfect sync.
-- The `style` param (`classic` | `hype`) only varies prompt tone: `classic` = measured radio, `hype` = over-the-top.
-- MVP scope is **no auth, no database, no history**. Burning narration into the video via server-side ffmpeg is a stretch goal only.
+- **Both API keys are server-side only** — `GEMINI_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID` live in the route handler / env, **never** in client code. Keep real values in gitignored `.env.local` (or `.env`); commit `.env.example` (names only); set all three in the Vercel dashboard. SDK clients are created lazily, so the build never needs keys.
+- **Always wire the Gemini → `scriptFallback` path** so a live demo can't fully break; only an ElevenLabs failure surfaces to the user (502).
+- **Model / voice gotchas** (all in `lib/config.ts`): ElevenLabs defaults to `eleven_multilingual_v2` (available on all plans, good PT-BR); `eleven_v3` has restricted API access. `ELEVENLABS_VOICE_ID` must be a voice the account's plan can use — premium/library voices reject on free tier (`free_users_not_allowed`).
+- Gemini uses the **Files API** (upload + poll until ACTIVE); keep clips short (~≤1 min) and within `MAX_VIDEO_BYTES` (20 MB) — mind Vercel's serverless payload/timeout limits.
+- The `style` param (`classic` | `hype`) only varies prompt tone. Player sync is intentionally loose (`<video muted>` + `<audio>`, `play()` together — it's a voiceover).
+- The **narrated mp4** (`lib/burnIn.ts`) muxes client-side with ffmpeg.wasm (single-threaded core from CDN, so no COOP/COEP headers). It uses `-c:v copy` (works for h264/mp4 phone clips) and **falls back to the manual download+edit path** on any failure — the app never depends on it.
+- No auth, no database, no history. The original server-side-ffmpeg burn-in stretch goal is instead done **client-side**.
