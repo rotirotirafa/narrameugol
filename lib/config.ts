@@ -22,8 +22,12 @@ export const DEFAULT_STYLE: NarrationStyle = "classic";
  */
 export const GEMINI_MODEL = "gemini-2.5-flash";
 export const GEMINI_MODEL_STRONG = "gemini-2.5-pro"; // only if video reading is weak
-export const ELEVENLABS_MODEL = "eleven_v3";
-export const ELEVENLABS_MODEL_FAST = "eleven_flash_v2_5"; // lower-latency fallback
+// Eleven v3 é o mais expressivo, mas o acesso via API é restrito (planos pagos /
+// acesso liberado ao v3). eleven_multilingual_v2 é o padrão confiável e com ótimo
+// PT-BR; troque para ELEVENLABS_MODEL_EXPRESSIVE se sua conta tiver acesso ao v3.
+export const ELEVENLABS_MODEL = "eleven_multilingual_v2";
+export const ELEVENLABS_MODEL_EXPRESSIVE = "eleven_v3"; // requer acesso à API do v3
+export const ELEVENLABS_MODEL_FAST = "eleven_flash_v2_5"; // menor latência
 
 /** ElevenLabs mp3 output format id. */
 export const ELEVENLABS_OUTPUT_FORMAT = "mp3_44100_128";

@@ -31,4 +31,5 @@ Adicionar as três variáveis no dashboard da Vercel (Project → Settings → E
 Constantes que valem centralizar em `lib/` (ou config), coerentes entre cliente e servidor:
 
 - **Limite de tamanho do vídeo** — usado na validação client e server ([SPEC-001](../specs/SPEC-001-video-upload.md)); alinhar aos limites de payload da função serverless ([ADR-0005](../architecture/decisions.md#adr-0005--áudio-como-base64-no-json)).
-- **Modelos de IA** — `gemini-2.5-flash` (fallback `gemini-2.5-pro`); ElevenLabs Eleven v3 (fallback Flash v2.5). **Confirmar os IDs atuais** na doc dos provedores antes de implementar (roadmap 1.6).
+- **Modelos de IA** — Gemini `gemini-2.5-flash` (forte: `gemini-2.5-pro`); ElevenLabs `eleven_multilingual_v2` por padrão (confiável em todos os planos e ótimo em PT-BR). Eleven v3 é mais expressivo, mas o acesso via API é restrito — use `ELEVENLABS_MODEL_EXPRESSIVE` só se sua conta tiver acesso ao v3. IDs em `lib/config.ts`.
+- **Voz do ElevenLabs (`ELEVENLABS_VOICE_ID`)** — precisa ser uma voz que o seu plano acessa. Vozes premium / da Voice Library podem exigir o tier **Creator ou acima** (erro `free_users_not_allowed`: "You need to be on the creator tier or above to use this voice"). No plano free, use uma voz *premade* / de "My Voices" e copie o **Voice ID** no painel do ElevenLabs.
