@@ -58,6 +58,12 @@ export interface Messages {
     download: string;
     scriptHeading: string;
   };
+  share: {
+    heading: string;
+    tip: string;
+    tools: string;
+    downloadVideo: string;
+  };
   states: {
     onAir: string;
     warming: string;
@@ -115,6 +121,12 @@ export const messages: Record<Lang, Messages> = {
       pauseAria: "Pausar a narração",
       download: "⬇ Baixar narração (mp3)",
       scriptHeading: "Roteiro da narração",
+    },
+    share: {
+      heading: "Quer postar nas redes? 📲",
+      tip: "Baixe a narração (mp3 acima) e o seu vídeo, e junte os dois num editor — a narração vira o áudio do vídeo.",
+      tools: "Dá pra fazer no CapCut, InShot, VN ou direto nos Reels/TikTok.",
+      downloadVideo: "⬇ Baixar vídeo (mudo)",
     },
     states: {
       onAir: "No ar",
@@ -175,6 +187,12 @@ export const messages: Record<Lang, Messages> = {
       pauseAria: "Pause the narration",
       download: "⬇ Download narration (mp3)",
       scriptHeading: "Narration script",
+    },
+    share: {
+      heading: "Want to post it? 📲",
+      tip: "Download the narration (mp3 above) and your clip, then combine them in an editor — the narration becomes the video's audio.",
+      tools: "Works in CapCut, InShot, VN, or straight in Reels/TikTok.",
+      downloadVideo: "⬇ Download clip (muted)",
     },
     states: {
       onAir: "On air",

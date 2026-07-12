@@ -33,24 +33,23 @@ export default function NarrationPlayer({
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   // Data URL for the mp3 — stable for a given audio payload, used both as the
   // <audio> source and the download href.
   const audioSrc = `data:${mime ?? "audio/mpeg"};base64,${audioBase64}`;
 
-  // Own the uploaded clip's object URL: create it for the current file, wire it
-  // onto the <video> imperatively, and revoke it on change/unmount so we never
-  // leak blob URLs. Creating inside the effect (rather than in render/useMemo)
-  // keeps this correct under React Strict Mode's mount→unmount→remount cycle —
-  // each mount gets a fresh URL, and no setState runs inside the effect.
+  // Own the uploaded clip's object URL: create it for the current file and
+  // revoke it on change/unmount so we never leak blob URLs. It's kept in state
+  // because the render needs it for both the <video> and the "download clip"
+  // link. Creating/revoking only here keeps it correct under React Strict Mode's
+  // mount→unmount→remount cycle.
   useEffect(() => {
     const url = URL.createObjectURL(videoFile);
-    const video = videoRef.current;
-    if (video) video.src = url;
-
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setVideoUrl(url);
     return () => {
       URL.revokeObjectURL(url);
-      if (video) video.removeAttribute("src");
     };
   }, [videoFile]);
 
@@ -114,11 +113,11 @@ export default function NarrationPlayer({
       className="mx-auto flex w-full max-w-2xl flex-col gap-4"
       aria-label={m.player.aria}
     >
-      {/* Video (muted) — the narration audio carries the sound. The `src` is
-          set imperatively by the effect that owns the object URL's lifecycle. */}
+      {/* Video (muted) — the narration audio carries the sound. */}
       <div className="overflow-hidden rounded-2xl bg-black shadow-lg">
         <video
           ref={videoRef}
+          src={videoUrl ?? undefined}
           muted
           playsInline
           className="aspect-video w-full bg-black"
@@ -167,6 +166,24 @@ export default function NarrationPlayer({
         <p className="whitespace-pre-wrap text-base leading-relaxed text-giz">
           {script}
         </p>
+      </div>
+
+      {/* How to post it on social — plus the muted clip to edit with. */}
+      <div className="rounded-2xl border border-ouro/25 bg-ouro/5 p-5">
+        <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-ouro">
+          {m.share.heading}
+        </h2>
+        <p className="text-sm leading-relaxed text-giz">{m.share.tip}</p>
+        <p className="mt-2 text-sm leading-relaxed text-giz-dim">
+          {m.share.tools}
+        </p>
+        <a
+          href={videoUrl ?? undefined}
+          download={videoFile.name || "narrameugol-video"}
+          className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl border-2 border-grama/50 px-5 py-3 text-sm font-semibold text-giz transition hover:bg-grama/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ouro"
+        >
+          {m.share.downloadVideo}
+        </a>
       </div>
     </section>
   );
