@@ -70,6 +70,14 @@ export interface Messages {
     networkError: string;
   };
   footer: string;
+  /** Error messages returned by /api/narrate (localized). */
+  apiErrors: {
+    noVideo: string;
+    notVideo: string;
+    tooLarge: string;
+    ttsFailed: string;
+    unexpected: string;
+  };
 }
 
 export const messages: Record<Lang, Messages> = {
@@ -122,6 +130,16 @@ export const messages: Record<Lang, Messages> = {
     },
     footer:
       "Feito na várzea, com café e paixão. Nada é salvo — recarregou, perdeu o lance.",
+    apiErrors: {
+      noVideo: "Envie um arquivo de vídeo para gerar a narração.",
+      notVideo: "O arquivo enviado não é um vídeo válido. Envie um clipe de vídeo.",
+      tooLarge:
+        "O vídeo é grande demais. Envie um clipe menor (mais curto ou mais leve).",
+      ttsFailed:
+        "Não foi possível gerar o áudio da narração agora. Tente novamente em instantes.",
+      unexpected:
+        "Ocorreu um erro inesperado ao processar a narração. Tente novamente.",
+    },
   },
   en: {
     htmlLang: "en",
@@ -172,5 +190,15 @@ export const messages: Record<Lang, Messages> = {
     },
     footer:
       "Made on the várzea, with coffee and passion. Nothing is saved — refresh and the play is gone.",
+    apiErrors: {
+      noVideo: "Please upload a video file to generate the narration.",
+      notVideo: "The uploaded file isn't a valid video. Please upload a video clip.",
+      tooLarge:
+        "The video is too large. Please upload a smaller clip (shorter or lighter).",
+      ttsFailed:
+        "We couldn't generate the narration audio right now. Please try again in a moment.",
+      unexpected:
+        "Something went wrong while processing the narration. Please try again.",
+    },
   },
 };

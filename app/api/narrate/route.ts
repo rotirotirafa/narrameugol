@@ -15,7 +15,7 @@
  * detalhes ficam apenas no `console.error` do servidor.
  */
 import type { NarrationStyle } from "@/lib/types";
-import { coerceLang } from "@/lib/i18n";
+import { coerceLang, DEFAULT_LANG, messages, type Lang } from "@/lib/i18n";
 import {
   AUDIO_MIME,
   DEFAULT_STYLE,
@@ -52,39 +52,32 @@ function errorResponse(message: string, status: number): Response {
 }
 
 export async function POST(req: Request): Promise<Response> {
+  let language: Lang = DEFAULT_LANG;
   try {
     const form = await req.formData();
     const video = form.get("video");
     const style = coerceStyle(form.get("style"));
-    const language = coerceLang(form.get("language"));
+    language = coerceLang(form.get("language"));
+    const t = messages[language].apiErrors;
 
     // --- Validação do upload (400 / 413) ---
     if (!(video instanceof File)) {
       console.error("[narrate] validação: campo 'video' ausente ou não é um arquivo.");
-      return errorResponse(
-        "Envie um arquivo de vídeo para gerar a narração.",
-        400,
-      );
+      return errorResponse(t.noVideo, 400);
     }
 
     if (!video.type.startsWith(VIDEO_MIME_PREFIX)) {
       console.error(
         `[narrate] validação: tipo de arquivo inválido (${video.type || "desconhecido"}).`,
       );
-      return errorResponse(
-        "O arquivo enviado não é um vídeo válido. Envie um clipe de vídeo.",
-        400,
-      );
+      return errorResponse(t.notVideo, 400);
     }
 
     if (video.size > MAX_VIDEO_BYTES) {
       console.error(
         `[narrate] validação: vídeo grande demais (${video.size} > ${MAX_VIDEO_BYTES} bytes).`,
       );
-      return errorResponse(
-        "O vídeo é grande demais. Envie um clipe menor (mais curto ou mais leve).",
-        413,
-      );
+      return errorResponse(t.tooLarge, 413);
     }
 
     // --- Roteiro: Gemini com fallback local (falha do Gemini NÃO vira erro) ---
@@ -107,10 +100,7 @@ export async function POST(req: Request): Promise<Response> {
       audio = await synthesizeSpeech(script);
     } catch (err) {
       console.error("[narrate] falha de TTS: o ElevenLabs não gerou o áudio.", err);
-      return errorResponse(
-        "Não foi possível gerar o áudio da narração agora. Tente novamente em instantes.",
-        502,
-      );
+      return errorResponse(t.ttsFailed, 502);
     }
 
     // --- Sucesso ---
@@ -125,9 +115,6 @@ export async function POST(req: Request): Promise<Response> {
   } catch (err) {
     // Qualquer coisa inesperada (ex.: formData malformado, erro de runtime).
     console.error("[narrate] erro inesperado ao processar a requisição.", err);
-    return errorResponse(
-      "Ocorreu um erro inesperado ao processar a narração. Tente novamente.",
-      500,
-    );
+    return errorResponse(messages[language].apiErrors.unexpected, 500);
   }
 }
