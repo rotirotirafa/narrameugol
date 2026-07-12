@@ -63,6 +63,9 @@ export interface Messages {
     tip: string;
     tools: string;
     downloadVideo: string;
+    makeVideo: string;
+    makingVideo: string;
+    makeVideoError: string;
   };
   states: {
     onAir: string;
@@ -124,9 +127,13 @@ export const messages: Record<Lang, Messages> = {
     },
     share: {
       heading: "Quer postar nas redes? 📲",
-      tip: "Baixe a narração (mp3 acima) e o seu vídeo, e junte os dois num editor — a narração vira o áudio do vídeo.",
-      tools: "Dá pra fazer no CapCut, InShot, VN ou direto nos Reels/TikTok.",
+      tip: "Prefere editar do seu jeito? Baixe o vídeo e a narração (mp3) e junte num editor.",
+      tools: "Funciona no CapCut, InShot, VN ou direto nos Reels/TikTok.",
       downloadVideo: "⬇ Baixar vídeo (mudo)",
+      makeVideo: "🎬 Baixar vídeo narrado (mp4)",
+      makingVideo: "Montando o vídeo narrado…",
+      makeVideoError:
+        "Não rolou montar o vídeo aqui. Baixe o vídeo e o mp3 e junte num editor.",
     },
     states: {
       onAir: "No ar",
@@ -190,9 +197,13 @@ export const messages: Record<Lang, Messages> = {
     },
     share: {
       heading: "Want to post it? 📲",
-      tip: "Download the narration (mp3 above) and your clip, then combine them in an editor — the narration becomes the video's audio.",
+      tip: "Rather edit it yourself? Download the clip and the narration (mp3) and combine them in an editor.",
       tools: "Works in CapCut, InShot, VN, or straight in Reels/TikTok.",
       downloadVideo: "⬇ Download clip (muted)",
+      makeVideo: "🎬 Download narrated video (mp4)",
+      makingVideo: "Building the narrated video…",
+      makeVideoError:
+        "Couldn't build the video here. Download the clip and mp3 and combine them in an editor.",
     },
     states: {
       onAir: "On air",

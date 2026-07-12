@@ -34,6 +34,10 @@ export default function NarrationPlayer({
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [videoJob, setVideoJob] = useState<{
+    status: "idle" | "working" | "error";
+    progress: number;
+  }>({ status: "idle", progress: 0 });
 
   // Data URL for the mp3 — stable for a given audio payload, used both as the
   // <audio> source and the download href.
@@ -108,6 +112,36 @@ export default function NarrationPlayer({
     setIsPlaying(false);
   }
 
+  /**
+   * Builds a single narrated mp4 in the browser (ffmpeg.wasm) and downloads it.
+   * On any failure we surface a hint pointing at the manual download + edit
+   * path below — the app never depends on this working.
+   */
+  async function handleMakeVideo() {
+    setVideoJob({ status: "working", progress: 0 });
+    try {
+      const { burnNarration } = await import("@/lib/burnIn");
+      const blob = await burnNarration(videoFile, audioBase64, {
+        mime: mime ?? "audio/mpeg",
+        onProgress: (ratio) => setVideoJob({ status: "working", progress: ratio }),
+      });
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "narrameugol.mp4";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
+
+      setVideoJob({ status: "idle", progress: 0 });
+    } catch (err) {
+      console.error("[NarrationPlayer] burnNarration falhou:", err);
+      setVideoJob({ status: "error", progress: 0 });
+    }
+  }
+
   return (
     <section
       className="mx-auto flex w-full max-w-2xl flex-col gap-4"
@@ -168,15 +202,36 @@ export default function NarrationPlayer({
         </p>
       </div>
 
-      {/* How to post it on social — plus the muted clip to edit with. */}
+      {/* Post it on social: one-click narrated mp4, or edit it yourself. */}
       <div className="rounded-2xl border border-ouro/25 bg-ouro/5 p-5">
-        <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-ouro">
+        <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-ouro">
           {m.share.heading}
         </h2>
-        <p className="text-sm leading-relaxed text-giz">{m.share.tip}</p>
-        <p className="mt-2 text-sm leading-relaxed text-giz-dim">
-          {m.share.tools}
+
+        <button
+          type="button"
+          onClick={handleMakeVideo}
+          disabled={videoJob.status === "working"}
+          aria-busy={videoJob.status === "working"}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-ouro px-5 py-3.5 text-sm font-black uppercase tracking-wide text-noite transition hover:brightness-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ouro disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          {videoJob.status === "working"
+            ? videoJob.progress > 0
+              ? `${m.share.makingVideo} ${Math.round(videoJob.progress * 100)}%`
+              : m.share.makingVideo
+            : m.share.makeVideo}
+        </button>
+
+        {videoJob.status === "error" ? (
+          <p role="alert" className="mt-2 text-sm text-poeira">
+            {m.share.makeVideoError}
+          </p>
+        ) : null}
+
+        <p className="mt-4 text-sm leading-relaxed text-giz-dim">
+          {m.share.tip} {m.share.tools}
         </p>
+
         <a
           href={videoUrl ?? undefined}
           download={videoFile.name || "narrameugol-video"}
