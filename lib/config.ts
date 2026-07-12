@@ -4,8 +4,13 @@
  */
 import type { NarrationStyle } from "./types";
 
-/** Max accepted upload size. Kept well within serverless payload limits. */
-export const MAX_VIDEO_BYTES = 20 * 1024 * 1024; // 20 MB
+/**
+ * Max accepted upload size. Vercel Functions cap the request body at ~4.5 MB
+ * (a platform limit, even on Pro), so keep uploads under that. For bigger clips
+ * the real fix is a direct client→storage upload (e.g. Vercel Blob) that sends
+ * only a URL to the route — a future improvement.
+ */
+export const MAX_VIDEO_BYTES = 4 * 1024 * 1024; // 4 MB
 
 /** Accepted upload mime types must start with this. */
 export const VIDEO_MIME_PREFIX = "video/";
